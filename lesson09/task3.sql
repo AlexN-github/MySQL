@@ -1,4 +1,4 @@
-#Задание №1
+#Р—Р°РґР°РЅРёРµ в„–1
 use shop;
 drop procedure if exists hello;
 delimiter //
@@ -6,10 +6,10 @@ CREATE PROCEDURE hello ()
 begin
      set @a = HOUR(NOW());
      SELECT case 
-		  when (0 <= @a) && (@a < 6) then 'Доброй ночи'	
-		  when (6 <= @a) && (@a < 12) then 'Доброе утро'	
-		  when (12 <= @a) && (@a < 18) then 'Добрый день'
-		  when (18 <= @a) && (@a < 24) then 'Добрый вечер'
+		  when (0 <= @a) && (@a < 6) then 'Р”РѕР±СЂРѕР№ РЅРѕС‡Рё'	
+		  when (6 <= @a) && (@a < 12) then 'Р”РѕР±СЂРѕРµ СѓС‚СЂРѕ'	
+		  when (12 <= @a) && (@a < 18) then 'Р”РѕР±СЂС‹Р№ РґРµРЅСЊ'
+		  when (18 <= @a) && (@a < 24) then 'Р”РѕР±СЂС‹Р№ РІРµС‡РµСЂ'
 	     end as hello;
 end//
 	
@@ -20,7 +20,7 @@ call hello();
 
 
 
-#Задание №2
+#Р—Р°РґР°РЅРёРµ в„–2
 use shop;
 drop trigger if exists check_update_products;
 delimiter //
@@ -54,7 +54,7 @@ VALUES
 
 
 
-#Задание №2
+#Р—Р°РґР°РЅРёРµ в„–2
 use shop;
 drop procedure if exists fib;
 delimiter //
