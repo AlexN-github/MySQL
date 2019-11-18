@@ -18,6 +18,8 @@ call hello();
 
 
 
+
+
 #Задание №2
 use shop;
 drop trigger if exists check_update_products;
@@ -48,3 +50,32 @@ INSERT INTO products
   (price, catalog_id)
 VALUES
   (7890.00, 1);
+
+
+
+
+#Задание №2
+use shop;
+drop procedure if exists fib;
+delimiter //
+CREATE PROCEDURE fib(n INT)
+begin
+  DECLARE m INT default 0;
+  DECLARE k INT DEFAULT 1;
+  DECLARE i INT;
+  DECLARE tmp INT;
+
+  SET m=0;
+  SET k=1;
+  SET i=1;
+
+  WHILE (i<=n) DO
+    SET tmp=m+k;
+    SET m=k;
+    SET k=tmp;
+    SET i=i+1;
+  END WHILE;
+  select m;
+ end//
+ 
+ call fib(10)
