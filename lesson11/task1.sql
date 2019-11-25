@@ -3,12 +3,12 @@
 use shop;
 DROP TABLE IF exists logs;
 CREATE TABLE logs (
-	id SERIAL PRIMARY KEY,
+	#id SERIAL PRIMARY KEY,
     id_PK INT UNSIGNED,
 	table_name VARCHAR(25),
 	field_name VARCHAR(25),
     created_at DATETIME DEFAULT NOW()
-);
+)engine=archive;
 
 drop trigger if exists tr_logs_write_users;
 drop trigger if exists tr_logs_write_catalogs;
@@ -54,3 +54,27 @@ INSERT INTO catalogs VALUES
   (NULL, 'Блоки питания');
 
 
+
+
+#Задание2
+
+use shop;
+
+drop procedure if exists dorepeat;
+delimiter //
+
+CREATE PROCEDURE dorepeat()
+       BEGIN
+         SET @x = 0;
+         set @p1 = 1000000;
+         REPEAT
+           SET @x = @x + 1;
+           INSERT INTO users (name, birthday_at) VALUES
+             ('Геннадий', '1990-10-05');
+         UNTIL @x > @p1 END REPEAT;
+       END
+       //
+ 
+DELIMITER ;
+
+CALL dorepeat();
