@@ -66,8 +66,8 @@ CREATE TABLE actors (
   FOREIGN KEY (country_id) REFERENCES countries(id) on delete cascade on update cascade
 ) COMMENT = 'Актеры';
 
-DROP TABLE IF EXISTS producer;
-CREATE TABLE producer (
+DROP TABLE IF EXISTS producers;
+CREATE TABLE producers (
   id SERIAL PRIMARY KEY,
   firstname VARCHAR(50) COMMENT 'Имя',
   lastname VARCHAR(50) COMMENT 'Фамилия',
@@ -88,7 +88,7 @@ CREATE TABLE producer_filmography (
   INDEX (prod_id) COMMENT 'Индекс для связи таблицей actors',
   primary key (film_id, prod_id),
   FOREIGN KEY (film_id) REFERENCES films(id) on delete cascade on update cascade,
-  FOREIGN KEY (prod_id) REFERENCES producer(id) on delete cascade on update cascade
+  FOREIGN KEY (prod_id) REFERENCES producers(id) on delete cascade on update cascade
 ) COMMENT = 'Фильмография режиссеров';
 
 DROP TABLE IF EXISTS actor_filmography;
@@ -233,8 +233,9 @@ select g.name, avg(r.rating) as sum_rating
 #1. Узнать сумму проката по конкретному фильму в конкретном городе
 drop function if exists get_SumRentalsAtCity;
 DELIMITER //
-CREATE FUNCTION get_SumRentalsAtCity() RETURNS bigint
+CREATE FUNCTION get_SumRentalsAtCity(FilmName varchar(255),CityName varchar(255)) RETURNS bigint
     DETERMINISTIC
+    COMMENT 'Узнать сумму проката по конкретному фильму в конкретном городе'
 begin
  DECLARE result bigint;
  SET result= (select rf.rental_fee #f.name, cities.name, 
@@ -249,11 +250,78 @@ begin
  		films as f
  			on f.id = rf.film_id
  	where
- 		f.name = "Film4" and
- 		cities.name = "City3");
+ 		f.name = FilmName and
+ 		cities.name = CityName);
  
  RETURN result; 
 END//
+
+DELIMITER ;
+
+
+#############################################################
+#############################################################
+#Создаем Procedure
+#1. Подобрать пользователю фильмы интересующих его жанров (жанры получаем из избранных)
+
+drop procedure if exists get_podgorka_films;
+DELIMITER //
+CREATE PROCEDURE get_podgorka_films(user_id bigint)
+    COMMENT 'Подбирает фильмы для пользователя исходя его предпочтений по жанрам'
+    NOT DETERMINISTIC
+	select f2.Name
+		from users as u
+		join user_favorit_films as uff
+			on u.id = uff.user_id
+		join films as f
+			on uff.film_id = f.id
+		join films as f2
+			on f.genre_id = f2.genre_id
+		where u.id = user_id
+    //
+DELIMITER ;
+
+#2. Узнать жанр, в котором чаще всего снимается актер
+drop procedure if exists get_ActorGenre;
+DELIMITER //
+CREATE PROCEDURE get_ActorGenre(actor_id bigint)
+    NOT DETERMINISTIC
+    COMMENT 'Узнать жанр, в котором чаще всего снимается актер'
+select a.firstname, a.lastname, g.name, count(g.name) as count_films
+	from actors as a
+	join actor_filmography as af
+		on a.id = af.actor_id
+	join films as f
+		on af.film_id = f.id
+	join genre as g
+		on f.genre_id = g.id
+	where a.id = actor_id
+	group by g.name
+	order by count_films desc
+	Limit 1;
+//
+
+DELIMITER ;
+
+#2. Узнать жанр, в котором чаще всего снимает режисер
+drop procedure if exists get_ProducerGenre;
+DELIMITER //
+CREATE PROCEDURE get_ProducerGenre(Producer_id bigint)
+    NOT DETERMINISTIC
+    COMMENT 'Узнать жанр, в котором чаще всего снимает режисер'
+select p.firstname, p.lastname, g.name, count(g.name) as count_films
+	from Producers as p
+	join Producer_filmography as pf
+		on p.id = pf.prod_id
+	join films as f
+		on pf.film_id = f.id
+	join genre as g
+		on f.genre_id = g.id
+	where p.id = Producer_id
+	group by g.name
+	order by count_films desc
+	Limit 1;
+//
 
 DELIMITER ;
 
@@ -366,7 +434,7 @@ INSERT INTO `actors` (`firstname`,`lastname`,`birthday_at`,`country_id`) VALUES
 ('Valentine', 'Goldner', '1997-02-02',6),
 ('Rasheed', 'Ebert', '2008-08-09',6);
 #Наполняем таблицу ПРОДЮССЕРЫ
-INSERT INTO `producer` (`firstname`,`lastname`,`birthday_at`,`country_id`) VALUES 
+INSERT INTO `producers` (`firstname`,`lastname`,`birthday_at`,`country_id`) VALUES 
 ('Celestino', 'Cruickshank', '2010-08-15',4),
 ('Hayley', 'Vandervort', '1967-01-26',4),
 ('Royal', 'DuBuque', '2006-11-14',8),
@@ -620,6 +688,29 @@ INSERT INTO `rentals_films` (`film_id`,`cinema_id`,`rental_fee`) VALUES
 ('16', '3', '3742'),
 ('15', '13', '1964');
 
-#select * from `get_SumRentalsAtCity`()
 
+####################################################
+####################################################
+####################################################
+#Выполняем созданные VIEW/FUNCTION/PROCEDURE
 
+#Кассовые сборы по фильмам
+select * from sum_rentals;
+
+#Топ 3 самых прибыльных кинотеатров
+select * from top3_cinemas;
+
+#Топ 3 самых популярных жанров
+select * from top3_genre;
+
+#Получаес сумму проката по фильму "Film4" в городе "City3"
+select `get_SumRentalsAtCity`("Film4","City3") as sum_rental;
+
+#Создаем подборку фильмов на оcнове жанров любимых фильмов для пользователя с ID=4
+call get_podgorka_films(4);
+
+#Узнаем жанр, в котором чаще всего снимается актер с ID=2
+call get_ActorGenre(2);	
+
+#Узнать жанр, в котором чаще всего снимает режисер
+call get_ProducerGenre(2);	
